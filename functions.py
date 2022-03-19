@@ -1,13 +1,12 @@
 from xml.dom import minidom
 from graphviz import Digraph, Graph
-from tkinter.filedialog import askopenfilename
-from tkinter import Tk
 from ciudad import Ciudad
 from LinkedList import LinkedList
+from Robot import *
 
 def pedirNumeroEntero():
-    correcto=False
-    num=0
+    correcto = False
+    num = 0
     while(not correcto):
         try:
             num = int(input("Introduce una opción: "))
@@ -16,32 +15,91 @@ def pedirNumeroEntero():
             print('¡Error, introduce un numero entero!')
     return num  
 
-def leerArchivo():
-    root = Tk()
-    #obtenemos la direccion local del archivo
-    root = askopenfilename(title= "Abrir Archivo", filetypes=(("Xml","*.xml"),("Todos los archivos","*.*")))
-    if root != "":
-        return root
-    return None
+def menuMision(mapas, robots):
+    a = mapas.length()
+    b = robots.length()
+
+    end = False
+    selection = 0
+
+    while(not end):
+        print("\n********** MISIONES **********\n 1. Rescate\n 2. Extraccón de recursos\n 3. Regresar")
+        selection = pedirNumeroEntero()
+        if selection == 1:
+            if b != 0:
+                aux = robots.head
+                i = 1
+                print("\n****** SELECCIONAR ROBOT ******")
+                while aux:
+                    robotType = aux.data.getTipo()
+                    if robotType == "ChapinRescue":
+                        print(" "+str(i) +". "+ aux.data.getNombre())
+                        i += 1
+                    aux = aux.next
+            else:
+                print("Sin robots disponibles")
+            seleccion = pedirNumeroEntero()
+
+        elif selection == 2:
+            if b != 0:
+                aux = robots.head
+                i = 1
+                print("\n****** SELECCIONAR ROBOT ******")
+                while aux:
+                    robotType = aux.data.getTipo()
+                    if robotType == "ChapinFighter":
+                        print(" "+str(i) +". "+ aux.data.getNombre())
+                        i += 1
+                    aux = aux.next
+            else:
+                print("Sin robots disponibles")
+            seleccion = pedirNumeroEntero()
+        elif selection == 3:
+            end = True
+        else:
+            print("Ingrese una opción correcta")
+
+def buscarRobots(data):
+    #CREAMOS LISTA AUXILIAR
+    listaRobots = LinkedList()
+    doc = minidom.parse(data)
+    rootNode = doc.documentElement
+    #OBTENEMOS LOS OBJETOS ROBOTS DEL ARCHIVO XML
+    robots = rootNode.getElementsByTagName("robot")
+    #RECORREMOS LA LISTA
+    for robot in robots:
+        date = robot.getElementsByTagName("nombre")[0]
+        robotName = date.firstChild.data
+        robotType = date.getAttribute("tipo")
+        if robotType == "ChapinFighter":
+            capacidad = date.getAttribute("capacidad")
+            aux = RobotChapinFighter(robotName, robotType, capacidad)
+            listaRobots.append(aux)
+        elif robotType == "ChapinRescue":
+            aux = RobotChapinRescue(robotName, robotType)
+            listaRobots.append(aux)
+        else:
+            print("Tipo de robot no reconocido: " + robotType)
+    return listaRobots
 
 def lecturaArchivosXml(data):
-    listCiudades = LinkedList()
+    listaCiudades = LinkedList()
     doc = minidom.parse(data)
     # Elemento raíz del documento
     rootNode = doc.documentElement
-    #listPisos.setName(rootNode.nodeName)
     # LISTAMOS TODAS LAS CIUDADADES
     ciudades = rootNode.getElementsByTagName("ciudad")
     #RECORREMOS LA LISTA DE CIUDADES
     for ciudad in ciudades:
         #CREAMOS EL OBJETO CIUDAD QUE CONTRENDRA TODOS LOS DATOS DE CADA MAPA
         city = Ciudad()
+        date = ciudad.getElementsByTagName("nombre")[0]
         #NOMBRE DE LA CIUDAD
-        name = ciudad.getElementsByTagName("nombre")[0].firstChild.data
+        name = date.firstChild.data
         #FILAS
-        filas = ciudad.getElementsByTagName("nombre")[0].getAttribute("filas")
+        filas = int(date.getAttribute("filas"))
         #COLUMNAS
-        columnas = ciudad.getElementsByTagName("nombre")[0].getAttribute("columnas")
+        columnas = int(date.getAttribute("columnas"))
         #EDITAMOS LOS ELEMENTOS DE CADA CIUDAD
         #NOMBRE
         city.setName(name)
@@ -51,11 +109,33 @@ def lecturaArchivosXml(data):
         city.setColumnas(columnas)
         print(name, filas, columnas)
 
-        filas = ciudad.getElementsByTagName("fila")
-        for i in filas:
-            print(i.firstChild.data)
-        
-        listCiudades.append(city)
+        leerFilas = ciudad.getElementsByTagName("fila")
+        leerUnidadesMilitares = ciudad.getElementsByTagName("unidadMilitar")
+        for elemento in leerFilas:
+            countCol = 0
+            numero = elemento.getAttribute("numero")
+            elementosFila = elemento.firstChild.data
+            for caracter in elementosFila:
+                if caracter == "*":
+                   print("Tipo: intr Fila: "+ numero + " columna: "+str(countCol))
+                elif caracter == " ":
+                    print("Tipo: tran Fila: "+ numero + " columna: "+str(countCol))
+                elif caracter == "E":
+                    print("Tipo: Entrada Fila: "+ numero + " columna: "+str(countCol))
+                elif caracter == "C":
+                   print("Tipo: Civil Fila: "+ numero + " columna: "+str(countCol))
+                elif caracter == "R":
+                    print("Tipo: Recurso Fila: "+ numero + " columna: "+str(countCol))
+                countCol +=1
+
+        for elemento in leerUnidadesMilitares:
+            fila = elemento.getAttribute("fila")
+            columna = elemento.getAttribute("columna") 
+            vida = elemento.firstChild.data
+            print(fila, columna, vida)
+        listaCiudades.append(city)
+    
+    return listaCiudades
 
 def graphPatter(tile, patern):
     position = 0
