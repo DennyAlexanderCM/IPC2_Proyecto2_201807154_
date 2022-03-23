@@ -1,154 +1,179 @@
+#CABEZA PRINCIPAL
+from sqlite3 import Date
+
+
 class Nodo_Head():
-    def __init__(self, id):
-        self.id = id #posicion de fila o columna
-        self.siguiente = None
-        self.anterior = None
-        self.acceso = None  # Apuntador a los nodos de la matriz(nodos internos)
-                            # self.acceso es como el root de la lista que esta en este encabezado
+    def __init__(self, position):
+        #DEFINE LA POSICION EN LA FILA O COLUMNA
+        self.position= position
+        self.nref = None
+        self.pref = None
+        #APUNTA A LOS NODOS DE LA MATRIZ
+        self.access = None
 
+#LISTA QUE CONTEDRA LOS ENCABEZADOS DE LA FILA Y COLUMNA DE LA MATRIZ
 class Lista_Encabezado():
-    def __init__(self, tipo):
-        self.primero: Nodo_Head = None
-        self.ultimo: Nodo_Head = None
-        self.tipo = tipo
-        self.size = 0
+    def __init__(self):
+        self.start_node: Nodo_Head = None
+        self.final_node: Nodo_Head = None
 
-    def insertar_nodoEncabezado(self, nuevo):
-        #nuevo = Nodo_Encabezado(nuevo)
-        self.size += 1
-        if self.primero == None: # Es el primer nodo insertado
-            self.primero = nuevo
-            self.ultimo = nuevo
+    def insert_node(self, node: Nodo_Head):
+
+        #SE VERIFICA SI LA LISTA ESTA VACÍA
+        if self.start_node == None:
+            self.start_node = node
+            self.final_node = node
+        #EN CASO CONTRARIO
         else:
-            # ---- Insercion en ORDEN
-            # -- verificamos si el nuevo nodo es menor que el primero
-            if nuevo.id < self.primero.id:
-                nuevo.siguiente = self.primero
-                self.primero.anterior = nuevo
-                self.primero = nuevo
-            # -- verificamos si el nuevo es mayor que el ultimo
-            elif nuevo.id > self.ultimo.id:
-                self.ultimo.siguiente = nuevo
-                nuevo.anterior = self.ultimo
-                self.ultimo = nuevo
+            if node.position < self.start_node.position:   
+                node.nref = self.start_node
+                self.final_node.pref = node
+                self.start_node = node
+                
+            elif node.position > self.final_node.position:
+                self.final_node.nref = node
+                node.pref = self.final_node
+                self.final_node = node
             else:
-                # -- sino, recorremos la lista para buscar donde acomodarnos, entre el primero y el ultimo
-                tmp: Nodo_Head = self.primero 
-                while tmp != None:
-                    if nuevo.id < tmp.id:
-                        nuevo.siguiente = tmp
-                        nuevo.anterior = tmp.anterior
-                        tmp.anterior.siguiente = nuevo
-                        tmp.anterior = nuevo
+                aux: Nodo_Head = self.start_node 
+                while aux:
+                    if (node.position < aux.position):
+                        node.nref = aux
+                        node.pref = aux.pref
+                        aux.pref.nref = node
+                        aux.pref = node
                         break
-                    elif nuevo.id > tmp.id:
-                        tmp = tmp.siguiente
-                    else:
-                        break
+                    aux = aux.nref                
 
-    def mostrarEncabezados(self):
-        tmp = self.primero
-        while tmp != None:
-            print('Encabezado', self.tipo, tmp.id)
-            tmp = tmp.siguiente
+    def printHead(self):
+        aux = self.start_node
+        while aux:
+            print(aux.position)
+            aux = aux.nref
 
-    def getEncabezado(self, id) -> Nodo_Head: #esta funcion debe retornar un nodo cabecera
-        tmp = self.primero
-        while tmp != None:
-            if id == tmp.id:
-                return tmp
-            tmp = tmp.siguiente
+    def getHead(self, position):
+        aux = self.start_node
+
+        while aux:
+            if position == aux.position:
+                return aux
+            aux = aux.nref
         return None
 
-class Nodo_Interno(): # Nodos ortogonales
-    def __init__(self, x, y, caracter):# 'caracter' puede ser cualquier valor
-        self.caracter = caracter
-        self.coordenadaX = x  # fila
-        self.coordenadaY = y  # columna
-        self.arriba = None
-        self.abajo = None
-        self.derecha = None  # self.siguiente
-        self.izquierda = None  # self.anterior
+class Nodo_Contendor():
+    def __init__(self, x, y, data):
+        self.data = data
+        self.positionX = x
+        self.positionY = y
+        self.up = None
+        self.down = None
+        self.right = None
+        self.left = None
 
-class MatrizDispersa():
+class Lista_Ortogonal():
     def __init__(self):
-        self.filas = Lista_Encabezado('fila') # Encabezados efe X
-        self.columnas = Lista_Encabezado('columna') # Encabezados efe Y
+        #LISTA DE ENCABEZADOS DEL EJE X
+        self.filas = Lista_Encabezado()
+        #LISTA DE ENCABEZADOS DEL EJE Y
+        self.columnas = Lista_Encabezado()
 
-    # (filas = x, columnas = y)
-    def insert(self, pos_x, pos_y, caracter):
-        nuevo = Nodo_Interno(pos_x, pos_y, caracter) # se crea nodo interno
-        # --- lo primero sera buscar si ya existen los encabezados en la matriz
-        nodo_X = self.filas.getEncabezado(pos_x)
-        nodo_Y = self.columnas.getEncabezado(pos_y)
+    #MÉTODO PARA INGRESAR UN NUEVO NODO EN LA POSICION X Y Y
+    def insert(self, pos_x, pos_y, data):
+        #SE CREA EL NODO QUE CONTENDRA EL DATO
+        nuevo = Nodo_Contendor(pos_x, pos_y, data)
+        nodo_X = self.filas.getHead(pos_x)
+        nodo_Y = self.columnas.getHead(pos_y)
 
-        if nodo_X == None: # --- comprobamos que el encabezado fila pos_x exista
-             # --- si nodo_X es nulo, quiere decir que no existe encabezado fila pos_x, por lo tanto hay que crearlo
+        if nodo_X == None:
             nodo_X = Nodo_Head(pos_x)
-            self.filas.insertar_nodoEncabezado(nodo_X)
-
-        if nodo_Y == None: # --- comprobamos que el encabezado columna pos_y exista
-            # --- si nodo_Y es nulo, quiere decir que no existe encabezado columna pos_y, por lo tanto hay que crearlo
-            nodo_Y = Nodo_Head(pos_y)
-            self.columnas.insertar_nodoEncabezado(nodo_Y)
-
-        # ----- INSERTAR NUEVO EN FILA
-        if nodo_X.acceso == None: # -- comprobamos que el nodo_x no esta apuntando hacia ningun nodoInterno
-            nodo_X.acceso = nuevo
-        else: # -- si esta apuntando, validamos si la posicion de la columna del NUEVO nodoInterno es menor a la posicion de la columna del acceso 
-            if nuevo.coordenadaY < nodo_X.acceso.coordenadaY: # F1 --->  NI 1,1     NI 1,3
-                nuevo.derecha = nodo_X.acceso              
-                nodo_X.acceso.izquierda = nuevo
-                nodo_X.acceso = nuevo
+            nodo_X.access = nuevo
+            self.filas.insert_node(nodo_X)
+        else:
+            if nuevo.positionY < nodo_X.access.positionY:
+                nuevo.right = nodo_X.access
+                nodo_X.access.left = nuevo
+                nodo_X.access = nuevo
             else:
-                #de no cumplirse debemos movernos de izquierda a derecha buscando donde posicionar el NUEVO nodoInterno
-                tmp : Nodo_Interno = nodo_X.acceso     # nodo_X:F1 --->      NI 1,2; NI 1,3; NI 1,5;
-                while tmp != None:                      #NI 1,6
-                    if nuevo.coordenadaY < tmp.coordenadaY:
-                        nuevo.derecha = tmp
-                        nuevo.izquierda = tmp.izquierda
-                        tmp.izquierda.derecha = nuevo
-                        tmp.izquierda = nuevo
-                        break;
-                    elif nuevo.coordenadaX == tmp.coordenadaX and nuevo.coordenadaY == tmp.coordenadaY: #validamos que no haya repetidas
-                        break;
+                tmp : Nodo_Contendor = nodo_X.access
+                while tmp:
+                    if nuevo.positionY < tmp.positionY:
+                        nuevo.right = tmp
+                        nuevo.left = tmp.right
+                        tmp.left.right = nuevo
+                        tmp.left = nuevo
+                        break
+                    elif nuevo.positionX == tmp.positionX and nuevo.positionY == tmp.positionY:
+                        """nuevo.left = tmp.left
+                        tmp.left.right = nuevo
+                        tmp.left = nuevo"""
+                        tmp.left.right = nuevo
+                        nuevo.left = tmp.left
+                        nuevo.right = tmp.right
+                        if tmp.right != None:
+                            tmp.right.left = nuevo
+                        break
                     else:
-                        if tmp.derecha == None:
-                            tmp.derecha = nuevo
-                            nuevo.izquierda = tmp
-                            break;
-                        else:
-                            tmp = tmp.derecha 
-                             #         nodo_Y:        C1    C3      C5      C6
-                             # nodo_X:F1 --->      NI 1,2; NI 1,3; NI 1,5; NI 1,6;
-                             # nodo_X:F2 --->      NI 2,2; NI 2,3; NI 2,5; NI 2,6;
+                        if tmp.right == None:
+                            tmp.right = nuevo
+                            nuevo.left = tmp
+                            break
+                    tmp = tmp.right
 
-        # ----- INSERTAR NUEVO EN COLUMNA
-        if nodo_Y.acceso == None:  # -- comprobamos que el nodo_y no esta apuntando hacia ningun nodoCelda
-            nodo_Y.acceso = nuevo
-        else: # -- si esta apuntando, validamos si la posicion de la fila del NUEVO nodoCelda es menor a la posicion de la fila del acceso 
-            if nuevo.coordenadaX < nodo_Y.acceso.coordenadaX:
-                nuevo.abajo = nodo_Y.acceso
-                nodo_Y.acceso.arriba = nuevo
+        if nodo_Y == None:
+            nodo_Y = Nodo_Head(pos_y)
+            nodo_Y.access = nuevo
+            self.columnas.insert_node(nodo_Y)
+        else:
+            if nuevo.positionX < nodo_Y.access.positionX:
+                nuevo.down = nodo_Y.access              
+                nodo_Y.access.up = nuevo
                 nodo_Y.acceso = nuevo
             else:
-                # de no cumplirse, debemos movernos de arriba hacia abajo buscando donde posicionar el NUEVO
-                tmp2 : Nodo_Interno = nodo_Y.acceso
-                while tmp2 != None:
-                    if nuevo.coordenadaX < tmp2.coordenadaX:
-                        nuevo.abajo = tmp2
-                        nuevo.arriba = tmp2.arriba
-                        tmp2.arriba.abajo = nuevo
-                        tmp2.arriba = nuevo
-                        break;
-                    elif nuevo.coordenadaX == tmp2.coordenadaX and nuevo.coordenadaY == tmp2.coordenadaY: #validamos que no haya repetidas
-                        break;
-                    else:
-                        if tmp2.abajo == None:
-                            tmp2.abajo = nuevo
-                            nuevo.arriba = tmp2
-                            break
-                        else:
-                            tmp2 = tmp2.abajo
+                tmp : Nodo_Contendor = nodo_Y.access
+                while tmp:
+                    if nuevo.positionX < tmp.positionX:
+                        nuevo.down = tmp
+                        nuevo.up = tmp.up
+                        tmp.up.down = nuevo
+                        tmp.up = nuevo
+                        break
+                    elif nuevo.positionX == tmp.positionX and nuevo.positionY == tmp.positionY:
+                        tmp.up.down = nuevo
+                        nuevo.up = tmp.up
+                        nuevo.down = tmp.down
+                        if tmp.down != None:
+                            tmp.down.up = nuevo
+                        """nuevo.down = tmp
+                        nuevo.up = tmp.up
+                        tmp.up.down = nuevo
+                        tmp.up = nuevo"""
 
-        ##------ Fin de insercion
+                        break
+                    else:
+                        if tmp.down == None:
+                            tmp.down = nuevo
+                            nuevo.up = tmp
+                            break
+                    tmp = tmp.down 
+
+    def imprimirLista(self):
+        aux = self.filas.start_node
+        while aux:
+            txt=""
+            pivote = aux.access
+            while pivote:
+                txt += str(pivote.data) +", "
+                pivote = pivote.right
+            print(txt)
+            aux = aux.nref
+
+    def imprimirLista2(self):
+        aux = self.columnas.start_node
+        while aux:
+            txt=""
+            pivote = aux.access
+            while pivote:
+                txt += str(pivote.data) +", "
+                pivote = pivote.down
+            print(txt)
+            aux = aux.nref

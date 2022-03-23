@@ -11,24 +11,53 @@ class LinkedList:
         self.last = None
 
     #VERIFICAMOS SI LA LISTA ESTA VACÍA
-    def emply(selft):
-        return selft.head
+    def emply(self):
+        return self.head
     
     #AGREGAMOS LOS DATOS AL FINAL
-    def append(selft, data):
+    def append(self, data):
         nodo = Node(data)
-        if not selft.emply():
-            selft.head = nodo
-            selft.last = nodo
+        if not self.emply():
+            self.head = nodo
+            self.last = nodo
         else:
-            selft.last.next = nodo
-            selft.last = nodo
+            self.last.next = nodo
+            self.last = nodo
     
     #RETORNAR EL NÚMERO DE ELEMENTOS
-    def length(selft):
+    def length(self):
         n = 0
-        i = selft.head
+        i = self.head
         while i:
             i = i.next
             n+=1
         return n
+    
+    def printDates(self):
+        aux = self.head
+        i = 1
+        while aux:
+            print(" "+ str(i) +". "+ aux.data.getName())
+            aux = aux.next
+            i += 1
+    
+    def searchData(self, tipo, seleccion):
+        aux = self.head
+        i = 1
+        while aux:
+            if aux.data.getTipo() == tipo:
+                if seleccion  == i:
+                    #print(aux.data.getNombre())
+                    return aux.data
+                i += 1
+            aux = aux.next
+        
+    def searchData2(self, posicion):
+        aux = self.head
+        i = 1
+        while aux:
+            if posicion  == i:
+                #print(aux.data.getNombre())
+                return aux.data
+            i += 1
+            aux = aux.next

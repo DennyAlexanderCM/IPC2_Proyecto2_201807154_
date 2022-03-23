@@ -3,6 +3,7 @@ from graphviz import Digraph, Graph
 from ciudad import Ciudad
 from LinkedList import LinkedList
 from Robot import *
+from ListaOrtogonal import Lista_Ortogonal
 
 def pedirNumeroEntero():
     correcto = False
@@ -15,12 +16,11 @@ def pedirNumeroEntero():
             print('¡Error, introduce un numero entero!')
     return num  
 
-def menuMision(mapas, robots):
-    a = mapas.length()
+#MENÚ SECUNDARIO
+def menuMision(robots, mapas):
+    #OBTENEMOS LA CANTIDAD DE OBJETOS EN LA LISTA
     b = robots.length()
-
     end = False
-    selection = 0
 
     while(not end):
         print("\n********** MISIONES **********\n 1. Rescate\n 2. Extraccón de recursos\n 3. Regresar")
@@ -28,36 +28,61 @@ def menuMision(mapas, robots):
         if selection == 1:
             if b != 0:
                 aux = robots.head
-                i = 1
+                i = 0
                 print("\n****** SELECCIONAR ROBOT ******")
                 while aux:
                     robotType = aux.data.getTipo()
                     if robotType == "ChapinRescue":
-                        print(" "+str(i) +". "+ aux.data.getNombre())
                         i += 1
+                        print(" "+str(i) +". "+ aux.data.getNombre())
                     aux = aux.next
+                robotSeleccionado = pedirNumeroEntero()
+                if robotSeleccionado <= i and robotSeleccionado > 0:
+                    print(robotSeleccionado, i)
+                    mapaCiudad = seleccionarMapa(mapas)
+                else:
+                    print("¡Ingrese una opción correcta!")#robotS = robots.searchData("ChapinRescue", robotSeleccionado)
+
             else:
                 print("Sin robots disponibles")
-            seleccion = pedirNumeroEntero()
-
+            
         elif selection == 2:
             if b != 0:
                 aux = robots.head
-                i = 1
+                i = 0
                 print("\n****** SELECCIONAR ROBOT ******")
                 while aux:
                     robotType = aux.data.getTipo()
                     if robotType == "ChapinFighter":
-                        print(" "+str(i) +". "+ aux.data.getNombre())
                         i += 1
+                        print(" "+str(i) +". "+ aux.data.getNombre())
                     aux = aux.next
+                robotSeleccionado = pedirNumeroEntero()
+                if robotSeleccionado <= i and robotSeleccionado > 0:
+                    mapaCiudad = seleccionarMapa(mapas)
+                else:
+                    print("¡Ingrese una opción correcta!") 
+                #robotS = robots.searchData("ChapinFighter", robotSeleccionado)
             else:
                 print("Sin robots disponibles")
-            seleccion = pedirNumeroEntero()
+            
         elif selection == 3:
             end = True
         else:
             print("Ingrese una opción correcta")
+
+def seleccionarMapa(mapas):
+    end = False
+    while(not end):
+        print("\n****** SELECCIONAR CIUDAD ******")
+        mapas.printDates()
+        selection = pedirNumeroEntero()
+        if mapas.length() >= selection and selection > 0:
+            seleccionado = mapas.searchData2(selection)
+            end = True
+            return seleccionado
+        else:
+            print("¡Ingrese una opción correcta!") 
 
 def buscarRobots(data):
     #CREAMOS LISTA AUXILIAR
@@ -82,7 +107,7 @@ def buscarRobots(data):
             print("Tipo de robot no reconocido: " + robotType)
     return listaRobots
 
-def lecturaArchivosXml(data):
+def lecturaArchivoXml(data):
     listaCiudades = LinkedList()
     doc = minidom.parse(data)
     # Elemento raíz del documento
@@ -91,6 +116,7 @@ def lecturaArchivosXml(data):
     ciudades = rootNode.getElementsByTagName("ciudad")
     #RECORREMOS LA LISTA DE CIUDADES
     for ciudad in ciudades:
+        mapa = Lista_Ortogonal()
         #CREAMOS EL OBJETO CIUDAD QUE CONTRENDRA TODOS LOS DATOS DE CADA MAPA
         city = Ciudad()
         date = ciudad.getElementsByTagName("nombre")[0]
@@ -107,7 +133,7 @@ def lecturaArchivosXml(data):
         city.setFilas(filas)
         #COLUMNAS
         city.setColumnas(columnas)
-        print(name, filas, columnas)
+        #print(name, filas, columnas)
 
         leerFilas = ciudad.getElementsByTagName("fila")
         leerUnidadesMilitares = ciudad.getElementsByTagName("unidadMilitar")
@@ -117,24 +143,27 @@ def lecturaArchivosXml(data):
             elementosFila = elemento.firstChild.data
             for caracter in elementosFila:
                 if caracter == "*":
-                   print("Tipo: intr Fila: "+ numero + " columna: "+str(countCol))
+                    mapa.insert(int(numero), int(countCol),caracter)
                 elif caracter == " ":
-                    print("Tipo: tran Fila: "+ numero + " columna: "+str(countCol))
+                    mapa.insert(int(numero), int(countCol),caracter)
                 elif caracter == "E":
-                    print("Tipo: Entrada Fila: "+ numero + " columna: "+str(countCol))
+                    mapa.insert(int(numero), int(countCol),caracter)
                 elif caracter == "C":
-                   print("Tipo: Civil Fila: "+ numero + " columna: "+str(countCol))
+                    mapa.insert(int(numero), int(countCol),caracter)
                 elif caracter == "R":
-                    print("Tipo: Recurso Fila: "+ numero + " columna: "+str(countCol))
+                    mapa.insert(int(numero), int(countCol),caracter)
                 countCol +=1
 
         for elemento in leerUnidadesMilitares:
             fila = elemento.getAttribute("fila")
             columna = elemento.getAttribute("columna") 
             vida = elemento.firstChild.data
-            print(fila, columna, vida)
+            mapa.insert(int(fila), int(columna), int(vida))
+            #print(fila, columna, vida)
+        city.setMapa(mapa)
+        mapa.imprimirLista2()
         listaCiudades.append(city)
-    
+    print("Datos Cargados Correctamente")
     return listaCiudades
 
 def graphPatter(tile, patern):

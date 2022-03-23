@@ -1,10 +1,10 @@
 class Ciudad:
     def __init__(self):
-        self.nombre = ""
+        self.name = ""
         self.filas = 0
         self.columnas = 0
         self.unidadMilitar = None
-        self.filasLista = None
+        self.mapa = None
 
     def setName(self, name):
         self.name = name
@@ -17,3 +17,18 @@ class Ciudad:
     
     def setUnidadMilitar(self, unidad):
         self.unidadMilitar = unidad
+    
+    def setMapa(self, mapa):
+        self.mapa = mapa
+    
+    def getName(self):
+        return self.name
+    
+    def getFilas(self):
+        return self.filas
+    
+    def getColumnas(self):
+        return self.columnas
+    
+    def getUnidadMilitar(self):
+        return self.unidadMilitar

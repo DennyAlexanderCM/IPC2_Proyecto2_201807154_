@@ -19,15 +19,18 @@ def run():
             rute = askopenfilename(title= "Abrir Archivo", filetypes=(("Xml","*.xml"),("Todos los archivos","*.*")))
             #ANALIZAMOS LOS DATOS DEL ARCHIVO DE ENTRADA
             if rute != "":
+                #ENLISTA LOS ROBOTS ENCONTRADOS EN EL ARCHIVO XML
                 robots =  buscarRobots(rute)
-                mapas = lecturaArchivosXml(rute)
+                #ENLISTA LAS CIUDADES ENCONTRADAS EN EL ARCHIVO XML
+                mapas = lecturaArchivoXml(rute)
             else:
                 print("No se realizaron Cambios")
 
         elif selection == 2:
-            
+            #VERIFICA SI LA LISTA DE CONTIENE MAPAS   
             if mapas.length() != 0:
-                menuMision(mapas, robots)
+                robot = menuMision(robots, mapas)
+                #ciudad = seleccionarMapa(mapas)
             else:
                 print("Sin datos")
             
