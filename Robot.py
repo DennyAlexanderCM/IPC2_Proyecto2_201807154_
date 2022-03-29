@@ -12,6 +12,9 @@ class RobotChapinFighter():
 
     def getCapacidad(self):
         return self.capacidad
+    
+    def setReduceCapacidad(self, capacidad):
+        self.capacidad = (self.capacidad - capacidad)
 
 class RobotChapinRescue():
     def __init__(self, nombre, tipo):

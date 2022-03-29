@@ -1,7 +1,8 @@
+from ast import Return
+from pickle import NONE
 from xml.dom import minidom
-from graphviz import Digraph, Graph
 from ciudad import Ciudad
-from LinkedList import LinkedList
+from LinkedList import LinkedList, LinkedListRobots
 from Robot import *
 from ListaOrtogonal import Lista_Ortogonal
 
@@ -17,7 +18,7 @@ def pedirNumeroEntero():
     return num  
 
 #MENÚ SECUNDARIO
-def menuMision(robots, mapas):
+def menuMision(robots: LinkedListRobots):
     #OBTENEMOS LA CANTIDAD DE OBJETOS EN LA LISTA
     b = robots.length()
     end = False
@@ -26,68 +27,138 @@ def menuMision(robots, mapas):
         print("\n********** MISIONES **********\n 1. Rescate\n 2. Extraccón de recursos\n 3. Regresar")
         selection = pedirNumeroEntero()
         if selection == 1:
-            if b != 0:
+            if b != 0 and robots.ChapinRescue:
                 aux = robots.head
                 i = 0
-                print("\n****** SELECCIONAR ROBOT ******")
+                print("\n******* SELECCIONAR ROBOT *******\n>> ROBOTS DISPONIBLES")
                 while aux:
                     robotType = aux.data.getTipo()
                     if robotType == "ChapinRescue":
                         i += 1
-                        print(" "+str(i) +". "+ aux.data.getNombre())
+                        print("  "+str(i) +". "+ aux.data.getNombre())
                     aux = aux.next
-                robotSeleccionado = pedirNumeroEntero()
-                if robotSeleccionado <= i and robotSeleccionado > 0:
-                    print(robotSeleccionado, i)
-                    mapaCiudad = seleccionarMapa(mapas)
+                selection = pedirNumeroEntero()
+
+                if selection <= i and selection > 0:
+                    return robots.searchData("ChapinRescue", selection)
                 else:
                     print("¡Ingrese una opción correcta!")#robotS = robots.searchData("ChapinRescue", robotSeleccionado)
-
             else:
                 print("Sin robots disponibles")
+                return None
             
         elif selection == 2:
-            if b != 0:
+            if b != 0 and robots.ChapinFighter:
                 aux = robots.head
                 i = 0
-                print("\n****** SELECCIONAR ROBOT ******")
+                print("\n******* SELECCIONAR ROBOT *******\n>> ROBOTS DISPONIBLES")
                 while aux:
                     robotType = aux.data.getTipo()
                     if robotType == "ChapinFighter":
                         i += 1
-                        print(" "+str(i) +". "+ aux.data.getNombre())
+                        print("  "+str(i) +". "+ aux.data.getNombre())
                     aux = aux.next
-                robotSeleccionado = pedirNumeroEntero()
-                if robotSeleccionado <= i and robotSeleccionado > 0:
-                    mapaCiudad = seleccionarMapa(mapas)
+                selection = pedirNumeroEntero()
+                if selection <= i and selection > 0:
+                    return robots.searchData("ChapinFighter", selection)
+                    
                 else:
                     print("¡Ingrese una opción correcta!") 
-                #robotS = robots.searchData("ChapinFighter", robotSeleccionado)
             else:
                 print("Sin robots disponibles")
-            
+                return None
         elif selection == 3:
             end = True
         else:
             print("Ingrese una opción correcta")
 
-def seleccionarMapa(mapas):
+def seleccionarMapa(mapas, tipo):
     end = False
     while(not end):
         print("\n****** SELECCIONAR CIUDAD ******")
+        #SE IMPRIMEN EL NOMBRE DE LOS MAPAS CARGADOS AL SISTEMA
         mapas.printDates()
         selection = pedirNumeroEntero()
         if mapas.length() >= selection and selection > 0:
             seleccionado = mapas.searchData2(selection)
-            end = True
-            return seleccionado
+            if tipo == "ChapinRescue":
+                if seleccionado.unidadCivil != False:
+                    end = True
+                    return seleccionado
+                else:
+                    print("!Mapa sin unidadesciviles!")
+                    end = True
+                    return None
+            elif tipo == "ChapinFighter":
+                if seleccionado.recurso != False:
+                    end = True
+                    return seleccionado
+                else:
+                    print("!Mapa sin recursos disponibles!")
+                    end = True
+                    return None
         else:
-            print("¡Ingrese una opción correcta!") 
+            print("¡Ingrese una opción correcta!")
+
+def buscarRuta(mapa, robot):
+    #IMPRIME UNA LISTA CON LAS ENTRADAS DISPONIBLES
+    ciudad:Lista_Ortogonal = mapa.mapa
+    end = False
+    A = None
+    B = None
+    
+    if ciudad.entradas > 1:
+        while(not end):
+            print("\n>>> ENTRADAS DE: " + mapa.getName())
+            ciudad.buscarEntradas()
+            seleccionar = pedirNumeroEntero()
+            if ciudad.entradas >= seleccionar and seleccionar > 0:
+                #NOS DEVUELVE EL NODO QUE CONTINE LOS DATOS DE LA ENTRADA
+                A = ciudad.buscarEntrada(seleccionar)
+                end = True
+            else:
+                print("¡Ingrese una opción correcta!")
+    elif ciudad.entradas == 1:
+        #NOS DEVUELVE EL NODO QUE CONTINE LOS DATOS DE LA ENTRADA
+        A = ciudad.buscarEntrada(1)
+        print(">>Entrada EN: (" + str(A.positionX) + ", " + str(A.positionY) + ")")
+    else:
+        print("Sin entradas disponible")
+    
+    #BUSCAR LOS RECURSOS O LOS CIVILES DEL MAPA
+    if robot.getTipo() == "ChapinFighter":
+        if ciudad.recursos > 1:
+            end = False
+            while (not end):
+                print("\n>>> RECURSOS DE: " + mapa.getName())
+                ciudad.buscarRecursos()
+                seleccionar = pedirNumeroEntero()
+                if ciudad.recursos >= seleccionar and seleccionar > 0:
+                   B = ciudad.buscarRecurso(seleccionar)
+                   end = True
+        else:
+            B = ciudad.buscarRecurso(1)
+    else:
+        if ciudad.civiles > 1:
+            end = False
+            while (not end):
+                print("\n>>> CIVILES EN: " + mapa.getName())
+                ciudad.buscarUnidadCivil()
+                seleccionar = pedirNumeroEntero()
+                if ciudad.civiles >= seleccionar and seleccionar > 0:
+                   B = ciudad.buscarCivil(seleccionar)
+                   end = True
+        else:
+            B = ciudad.buscarCivil(1)
+            
+    ciudad.searchRute(A, B, robot)
+    ciudad.createGraph()
 
 def buscarRobots(data):
     #CREAMOS LISTA AUXILIAR
-    listaRobots = LinkedList()
+    listaRobots = LinkedListRobots()
     doc = minidom.parse(data)
+    # Elemento raíz del documento
     rootNode = doc.documentElement
     #OBTENEMOS LOS OBJETOS ROBOTS DEL ARCHIVO XML
     robots = rootNode.getElementsByTagName("robot")
@@ -98,9 +169,11 @@ def buscarRobots(data):
         robotType = date.getAttribute("tipo")
         if robotType == "ChapinFighter":
             capacidad = date.getAttribute("capacidad")
-            aux = RobotChapinFighter(robotName, robotType, capacidad)
+            listaRobots.ChapinFighter = True
+            aux = RobotChapinFighter(robotName, robotType, int(capacidad))
             listaRobots.append(aux)
         elif robotType == "ChapinRescue":
+            listaRobots.ChapinRescue = True
             aux = RobotChapinRescue(robotName, robotType)
             listaRobots.append(aux)
         else:
@@ -143,46 +216,31 @@ def lecturaArchivoXml(data):
             elementosFila = elemento.firstChild.data
             for caracter in elementosFila:
                 if caracter == "*":
-                    mapa.insert(int(numero), int(countCol),caracter)
+                    mapa.insert(int(countCol), int(numero), caracter)
                 elif caracter == " ":
-                    mapa.insert(int(numero), int(countCol),caracter)
+                    mapa.insert(int(countCol), int(numero), caracter)
                 elif caracter == "E":
-                    mapa.insert(int(numero), int(countCol),caracter)
+                    mapa.entradas += 1
+                    mapa.insert(int(countCol), int(numero), caracter)
                 elif caracter == "C":
-                    mapa.insert(int(numero), int(countCol),caracter)
+                    city.setUnidadCivil(True)
+                    mapa.civiles += 1
+                    mapa.insert(int(countCol), int(numero), caracter)
                 elif caracter == "R":
-                    mapa.insert(int(numero), int(countCol),caracter)
+                    city.setRecurso(True)
+                    mapa.recursos += 1
+                    mapa.insert(int(countCol), int(numero), caracter)
                 countCol +=1
-
-        for elemento in leerUnidadesMilitares:
-            fila = elemento.getAttribute("fila")
-            columna = elemento.getAttribute("columna") 
-            vida = elemento.firstChild.data
-            mapa.insert(int(fila), int(columna), int(vida))
-            #print(fila, columna, vida)
+        if len(leerUnidadesMilitares) > 0:
+            
+            for elemento in leerUnidadesMilitares:
+                fila = elemento.getAttribute("fila")
+                columna = elemento.getAttribute("columna") 
+                vida = elemento.firstChild.data
+                mapa.insert(int(columna), int(fila), int(vida))
+                #print(fila, columna, vida)
         city.setMapa(mapa)
-        mapa.imprimirLista2()
         listaCiudades.append(city)
     print("Datos Cargados Correctamente")
     return listaCiudades
 
-def graphPatter(tile, patern):
-    position = 0
-    txt = ""
-    #filas
-    R = int(tile.getR())
-    #columnas
-    C = int(tile.getC())
-    s = Digraph('html_table' )
-    for i in range(R):
-        txt +="<TR>"
-        for j in range(C):
-            if patern[position] == "W":
-                txt+='<TD bgcolor="white" border="2"></TD>'
-            else:
-                txt += '<TD bgcolor="black" border="2"></TD>'
-            position +=1
-        txt += "</TR>"
-
-    s.node('tab', label='<<TABLE border="0" cellspacing="2" cellpadding="30">'+txt+'</TABLE>>', shape='box')
-    s.render('Graficas/Pisos.gv',format='jpg', view=True)

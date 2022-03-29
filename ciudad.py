@@ -3,7 +3,9 @@ class Ciudad:
         self.name = ""
         self.filas = 0
         self.columnas = 0
-        self.unidadMilitar = None
+        self.unidadCivil = False
+        self.recurso = False
+        #CONTIENE LA MATRIZ ORTOGONAL CON LOS DAOTS DEL MAPA
         self.mapa = None
 
     def setName(self, name):
@@ -20,6 +22,12 @@ class Ciudad:
     
     def setMapa(self, mapa):
         self.mapa = mapa
+    
+    def setRecurso(self, recurso):
+        self.recurso = recurso
+
+    def setUnidadCivil(self, unidadCivil):
+        self.unidadCivil = unidadCivil 
     
     def getName(self):
         return self.name

@@ -1,5 +1,5 @@
 from functions import*
-from LinkedList import LinkedList
+from LinkedList import LinkedList, LinkedListRobots
 from tkinter.filedialog import askopenfilename
 from tkinter import Tk
 
@@ -7,7 +7,7 @@ def run():
     end = False
     selection = 0
     mapas = LinkedList()
-    robots = LinkedList()
+    robots = LinkedListRobots()
 
     while not end:
         print("\n************ MENÚ ************\n 1. Cargar Configuración\n 2. Misiones\n 3. Salir")
@@ -29,8 +29,10 @@ def run():
         elif selection == 2:
             #VERIFICA SI LA LISTA DE CONTIENE MAPAS   
             if mapas.length() != 0:
-                robot = menuMision(robots, mapas)
-                #ciudad = seleccionarMapa(mapas)
+                robot = menuMision(robots)
+                if robot:
+                    ciudad = seleccionarMapa(mapas, robot.getTipo())
+                    buscarRuta(ciudad, robot)
             else:
                 print("Sin datos")
             
