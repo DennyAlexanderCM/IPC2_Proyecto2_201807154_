@@ -49,7 +49,7 @@ class LinkedList:
             print(" "+ str(i) +". "+ aux.data.getName())
             aux = aux.next
             i += 1
-    
+
     def searchData(self, tipo, seleccion):
         aux = self.head
         i = 1
@@ -60,7 +60,6 @@ class LinkedList:
                     return aux.data
                 i += 1
             aux = aux.next
-        
         
     def searchData2(self, posicion):
         aux = self.head

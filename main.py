@@ -2,7 +2,6 @@ from functions import*
 from LinkedList import LinkedList, LinkedListRobots
 from tkinter.filedialog import askopenfilename
 from tkinter import Tk
-
 def run():
     end = False
     selection = 0
@@ -14,8 +13,6 @@ def run():
         selection = pedirNumeroEntero()
         if selection == 1:
             #OBTENEMOS LA RUTA DEL ARCHIVO
-            rute = Tk()
-            #obtenemos la direccion local del archivo
             rute = askopenfilename(title= "Abrir Archivo", filetypes=(("Xml","*.xml"),("Todos los archivos","*.*")))
             #ANALIZAMOS LOS DATOS DEL ARCHIVO DE ENTRADA
             if rute != "":

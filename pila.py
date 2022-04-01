@@ -1,9 +1,12 @@
-from graphviz import Digraph, Graph
 #CLASE NODO
+from numpy import insert
+
+
 class Node:
     def __init__(self,data):
         self.data = data
-        self.next = None
+        self.nref = None
+        self.pref = None
 
 #CLASE DE LA LISTA ENLAZADA DE LOS PISOS
 class Lista_Nodos:
@@ -15,47 +18,67 @@ class Lista_Nodos:
         return self.head
 
     #AGREGAMOS LOS DATOS AL INICIO
-    def add(self , data):
+    def insert(self , data):
         nodo = Node(data)
         if not self.emply():
             self.head = nodo
         else:
-            nodo.next = self.head
+            nodo.nref = self.head
+            self.head.pref = nodo
             self.head = nodo
+    
+    def deleteData(self, data):
+        if not(self.emply):
+            print("The list has no element to delete")
+            return 
+        if self.head.nref is None:
+            if self.head.data.value == data:
+                self.head = None
+            else:
+                print("Item not found")
+            return 
+
+        if self.head.data.value == data:
+            self.head = self.head.nref
+            self.head.pref = None
+            return
+
+        n = self.head
+        while n.nref is not None:
+            if n.data.value == data:
+                break;
+            n = n.nref
+        
+        if n.nref is not None:
+            n.pref.nref = n.nref
+            n.nref.pref = n.pref
+        else:
+            if n.data.value == data:
+                n.pref.nref = None
+            else:
+                print("Element not found")
     
     def print(self):
         aux = self.head
         while aux:
             print(aux.data)
-            aux = aux.next
+            aux = aux.nref
         
     def cleanlist(self):
         self.head = None
     
-    def buscarMayor(self):
+    def datoMenor(self):
         aux = self.head
         menor = aux
-        while aux:
-            if aux.next:
-                if menor.data.value > aux.next.data.value:
-                    menor = aux.next
-            else:
-                return menor.data
-            aux = aux.next
+        if self.emply:
+            while aux:
+                if aux.nref:
+                    if menor.data.value > aux.nref.data.value:
+                        menor = aux.nref
+                else:
+                    return menor.data
+                aux = aux.nref
+        else:
+            return None
 
-    
-    def deleteFirst(self):
-        if self.head.next != None:
-            self.head = self.head.next
-
-
-"""lista = Lista_Nodos()
-lista.add(1)
-lista.add(2)
-lista.add(3)
-lista.add(4)
-lista.deleteFirst()
-lista.print()
-lista.cleanlist()
-lista.print()"""
 

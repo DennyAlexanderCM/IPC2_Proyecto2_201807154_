@@ -56,7 +56,7 @@ def menuMision(robots: LinkedListRobots):
                     robotType = aux.data.getTipo()
                     if robotType == "ChapinFighter":
                         i += 1
-                        print("  "+str(i) +". "+ aux.data.getNombre())
+                        print("  "+str(i) +". "+ aux.data.getNombre() + "   Capacidad: " + str(aux.data.getCapacidad()))
                     aux = aux.next
                 selection = pedirNumeroEntero()
                 if selection <= i and selection > 0:
@@ -150,9 +150,9 @@ def buscarRuta(mapa, robot):
                    end = True
         else:
             B = ciudad.buscarCivil(1)
-            
+
     ciudad.searchRute(A, B, robot)
-    ciudad.createGraph()
+    ciudad.createGraph(mapa)
 
 def buscarRobots(data):
     #CREAMOS LISTA AUXILIAR

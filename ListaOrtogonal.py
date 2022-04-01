@@ -1,3 +1,4 @@
+from ciudad import Ciudad
 from pila import Lista_Nodos
 from graphviz import Digraph, Graph
 import numpy as np
@@ -64,7 +65,9 @@ class Nodo_Contendor():
     def __init__(self, x, y, data):
         self.data = data
         self.value = 0
+        self.anterior = None
         self.visited = False
+        self.camino = False
         self.positionX = x
         self.positionY = y
         self.up = None
@@ -81,7 +84,17 @@ class Lista_Ortogonal():
         self.entradas = 0
         self.recursos = 0
         self.civiles = 0
-
+    
+    def restablecerDatos(self):
+        aux = self.filas.start_node
+        while aux:
+            pivote:Nodo_Contendor = aux.access
+            while pivote:
+                pivote.anterior = None
+                pivote.camino = False
+                pivote.visited = False
+                pivote = pivote.right
+            aux = aux.nref
 
     #MÉTODO PARA INGRESAR UN NUEVO NODO EN LA POSICION X Y Y
     def insert(self, pos_x, pos_y, data):
@@ -173,17 +186,17 @@ class Lista_Ortogonal():
             print(txt)
             aux = aux.nref
         print("fin")
-
-    def imprimirLista2(self):
-        aux = self.columnas.start_node
+    
+    def copyList(self):
+        lista = Lista_Ortogonal()
+        aux = self.filas.start_node
         while aux:
-            txt=""
-            pivote = aux.access
+            pivote:Nodo_Contendor = aux.access
             while pivote:
-                txt += str(pivote.data) +", "
-                pivote = pivote.down
-            print(txt)
+                lista.insert(pivote.data,pivote.positionX, pivote.positionY, pivote.data)
+                pivote = pivote.right
             aux = aux.nref
+        return lista
     
     def searchNode(self, positionX, positionY):
         aux_1 = self.filas.start_node
@@ -278,159 +291,198 @@ class Lista_Ortogonal():
             aux_1 = aux_1.nref
         return None
     
+
+
     def searchRute(self, A: Nodo_Contendor, B: Nodo_Contendor, robot):
+        #Contendra la lista de nodos por analizar
         listaActiva = Lista_Nodos()
-        listaNodos = Lista_Nodos()
+        #contendra la lista de nodos descartados
+        listaCerrada = Lista_Nodos()
         aux_1: Nodo_Contendor = A
         aux_1.visited = True
         #meta
-        aux_2: Nodo_Contendor = B
         end = False
         
         if robot.getTipo() == "ChapinFighter":
+            vidaInicial = robot.getCapacidad()
+            vidaFinal = robot.getCapacidad()
             while (not end):
-                success = False
-                if aux_1.left != None and aux_1.left.data != "*" and aux_1.left.visited != True:
-                    if isinstance(aux_1.left.data, int):
-                        if robot.getCapacidad() > aux_1.left.data:
-                            robot.setReduceCapacidad(aux_1.left.data)
-                            f = self.valueF(aux_1.left, aux_2)
-                            aux = aux_1.left
-                            aux.value = f
-                            success = True
-                            listaNodos.add(aux)
-                            
-                    else:
-                        f = self.valueF(aux_1.left, aux_2)
-                        aux = aux_1.left
-                        aux.value = f
-                        success = True
-                        listaNodos.add(aux)
-
-                if aux_1.right != None and aux_1.right.data != "*" and aux_1.right.visited != True:
-                    if isinstance(aux_1.right.data, int):
-                        if robot.getCapacidad() > aux_1.right.data:
-                            #robot.setReduceCapacidad(aux_1.right.data)
-                            f = self.valueF(aux_1.right, aux_2)
-                            aux = aux_1.right
-                            aux.value = f
-                            success = True
-                            listaNodos.add(aux)
-                    else:
-                        f = self.valueF(aux_1.right, aux_2)
-                        aux = aux_1.right
-                        aux.value = f
-                        success = True
-                        listaNodos.add(aux)
-                if aux_1.down != None and aux_1.down.data != "*" and aux_1.down.visited != True:
-                    if isinstance(aux_1.down.data, int):
-                        if robot.getCapacidad() > aux_1.down.data:
-                            robot.setReduceCapacidad(aux_1.down.data)
-                            f = self.valueF(aux_1.down, aux_2)
-                            aux = aux_1.down
-                            aux.value = f
-                            success = True
-                            listaNodos.add(aux)
-                    else:
-                        f = self.valueF(aux_1.down, aux_2)
-                        aux = aux_1.down
-                        aux.value = f
-                        success = True
-                        listaNodos.add(aux)
-                if aux_1.up != None and aux_1.up.data != "*" and aux_1.up.visited != True:
-                    if isinstance(aux_1.up.data, int):
-                        if robot.getCapacidad() > aux_1.up.data:
-                            robot.setReduceCapacidad(aux_1.up.data)
-                            f = self.valueF(aux_1.up, aux_2)
-                            aux = aux_1.up
-                            aux.value = f
-                            success = True
-                            listaNodos.add(aux)
-                    else:
-                        f = self.valueF(aux_1.up, aux_2)
-                        aux = aux_1.up
-                        aux.value = f
-                        success = True
-                        listaNodos.add(aux)
-                
-                if success == False:
-                    listaActiva.deleteFirst()
-                    aux_1 = listaActiva.head.data
-                else:
-                    x = listaNodos.buscarMayor()
-                    listaNodos.cleanlist()
-                    x.visited = True
-                    listaActiva.add(x)
-                    aux_1 = x
-                    print(x.value, aux_1.positionX, aux_1.positionY)
-                if aux_1.value == 1:
-                    A.visited = False
-                    B.visited = False
-                    print(robot.getCapacidad())
-                    end = True
-        else:
-            while (not end):
-                success = False
                 if aux_1.left != None and aux_1.left.data != "*" and aux_1.left.visited != True:
                     if not (isinstance(aux_1.left.data, int)):
-                        f = self.valueF(aux_1.left, aux_2)
+                        h = self.valueF(aux_1.left, B)
                         aux = aux_1.left
-                        aux.value = f
-                        success = True
-                        listaNodos.add(aux)
+                        aux.visited = True
+                        aux.anterior = aux_1
+                        aux.value = h
+                        listaActiva.insert(aux)
+                    else:
+                        if vidaInicial > aux_1.left.data:
+                            if vidaFinal > aux_1.left.data:
+                                h = self.valueF(aux_1.left, B)
+                                aux = aux_1.left
+                                aux.visited = True
+                                aux.anterior = aux_1
+                                aux.value = h
+                                vidaFinal = (vidaFinal - aux_1.left.data)
+                                listaActiva.insert(aux)
 
                 if aux_1.right != None and aux_1.right.data != "*" and aux_1.right.visited != True:
                     if not(isinstance(aux_1.right.data, int)):
-                        f = self.valueF(aux_1.right, aux_2)
+                        h = self.valueF(aux_1.right, B)
                         aux = aux_1.right
-                        aux.value = f
-                        success = True
-                        listaNodos.add(aux)
+                        aux.visited = True
+                        aux.anterior = aux_1
+                        aux.value = h
+                        listaActiva.insert(aux)
+                    else:
+                        if vidaInicial > aux_1.right.data:
+                            if vidaFinal > aux_1.right.data:
+                                h = self.valueF(aux_1.right, B)
+                                aux = aux_1.right
+                                aux.visited = True
+                                aux.anterior = aux_1
+                                aux.value = h
+                                vidaFinal = (vidaFinal - aux_1.right.data)
+                                listaActiva.insert(aux)
+                    
                 if aux_1.down != None and aux_1.down.data != "*" and aux_1.down.visited != True:
                     if not(isinstance(aux_1.down.data, int)):
-                        f = self.valueF(aux_1.down, aux_2)
+                        h = self.valueF(aux_1.down, B)
                         aux = aux_1.down
-                        aux.value = f
+                        aux.visited = True
+                        aux.anterior = aux_1
+                        aux.value = h
                         success = True
-                        listaNodos.add(aux)
+                        listaActiva.insert(aux)
+                    else:
+                        if vidaInicial > aux_1.down.data:
+                            if vidaFinal > aux_1.down.data:
+                                h = self.valueF(aux_1.down, B)
+                                aux = aux_1.down
+                                aux.visited = True
+                                aux.anterior = aux_1
+                                aux.value = h
+                                vidaFinal = (vidaFinal - aux_1.down.data)
+                                listaActiva.insert(aux)
+    
                 if aux_1.up != None and aux_1.up.data != "*" and aux_1.up.visited != True:
                     if not(isinstance(aux_1.up.data, int)):
-                        f = self.valueF(aux_1.up, aux_2)
+                        h = self.valueF(aux_1.up, B)
                         aux = aux_1.up
-                        aux.value = f
+                        aux.visited = True
+                        aux.anterior = aux_1
+                        aux.value = h
                         success = True
-                        listaNodos.add(aux)
-                
-                if success == False:
-                    listaActiva.deleteFirst()
-                    aux_1 = listaActiva.head.data
+                        listaActiva.insert(aux)
+                    else:
+                        if vidaInicial > aux_1.up.data:
+                            if vidaFinal > aux_1.up.data:
+                                h = self.valueF(aux_1.up, B)
+                                aux = aux_1.up
+                                aux.visited = True
+                                aux.anterior = aux_1
+                                aux.value = h
+                                vidaFinal = (vidaFinal - aux_1.up.data)
+                                listaActiva.insert(aux)
+
+                listaActiva.deleteData(aux_1.value)
+                if listaActiva.emply():
+                    aux_1 = listaActiva.datoMenor()
+                    if aux_1!= None:
+                        if aux_1.positionX == B.positionX and aux_1.positionY == B.positionY:
+                            A.visited = False
+                            B.visited = False
+                            end = True
+                            aux_3:Nodo_Contendor = aux_1
+                            while aux_3:
+                                aux_3.camino = True
+                                print(aux_3.positionX, aux_3.positionY)
+                                aux_3 = aux_3.anterior
+                            A.camino = False
+                            B.camino = False
+                    else:
+                        print("Sin ruta encontrada")
                 else:
-                    x = listaNodos.buscarMayor()
-                    listaNodos.cleanlist()
-                    x.visited = True
-                    listaActiva.add(x)
-                    aux_1 = x
-                    print(x.value, aux_1.positionX, aux_1.positionY)
-                if aux_1.value == 1:
-                    A.visited = False
-                    B.visited = False
-                    end = True
-        
+                    print("Sin ruta encontrada")
+                    break
+        else:
+            while (not end):
+                success = False
+                if aux_1 != None:
+                    if aux_1.left != None and aux_1.left.data != "*" and aux_1.left.visited != True:
+                        if not (isinstance(aux_1.left.data, int)):
+                            h = self.valueF(aux_1.left, B)
+                            aux = aux_1.left
+                            aux.visited = True
+                            aux.anterior = aux_1
+                            aux.value = h
+                            success = True
+                            listaActiva.insert(aux)
+
+                    if aux_1.right != None and aux_1.right.data != "*" and aux_1.right.visited != True:
+                        if not(isinstance(aux_1.right.data, int)):
+                            h = self.valueF(aux_1.right, B)
+                            aux = aux_1.right
+                            aux.visited = True
+                            aux.anterior = aux_1
+                            aux.value = h
+                            success = True
+                            listaActiva.insert(aux)
+                    
+                    if aux_1.down != None and aux_1.down.data != "*" and aux_1.down.visited != True:
+                        if not(isinstance(aux_1.down.data, int)):
+                            h = self.valueF(aux_1.down, B)
+                            aux = aux_1.down
+                            aux.visited = True
+                            aux.anterior = aux_1
+                            aux.value = h
+                            success = True
+                            listaActiva.insert(aux)
+    
+                    if aux_1.up != None and aux_1.up.data != "*" and aux_1.up.visited != True:
+                        if not(isinstance(aux_1.up.data, int)):
+                            h = self.valueF(aux_1.up, B)
+                            aux = aux_1.up
+                            aux.visited = True
+                            aux.anterior = aux_1
+                            aux.value = h
+                            success = True
+                            listaActiva.insert(aux)
+                    listaActiva.deleteData(aux_1.value)
+                    if listaActiva.emply():
+                        aux_1 = listaActiva.datoMenor()
+                        if aux_1!= None:
+                            if aux_1.positionX == B.positionX and aux_1.positionY == B.positionY:
+                                    A.visited = False
+                                    B.visited = False
+                                    end = True
+                                    aux_3:Nodo_Contendor = aux_1
+                                    while aux_3:
+                                        aux_3.camino = True
+                                        print(aux_3.positionX, aux_3.positionY)
+                                        aux_3 = aux_3.anterior
+                                    A.camino = False
+                                    B.camino = False
+                        else:
+                            print("Sin ruta encontrada")
+                    else:
+                        print("Sin ruta encontrada")
+                        break
 
     def valueF(self, nodoA: Nodo_Contendor, nodoB: Nodo_Contendor):
         valor = 0
-        a = np.abs(nodoA.positionX) - np.abs(nodoB.positionX)
-        b = np.abs(nodoA.positionY) - np.abs(nodoB.positionY)
+        a = nodoA.positionX - nodoB.positionX
+        b = nodoA.positionY - nodoB.positionY
         a = np.abs(a)
         b = np.abs(b)
         valor = a+b
-        return valor+1
+        return valor
     
-    def createGraph(self):
+    def createGraph(self, mapa:Ciudad):
         aux_1 = self.filas.start_node
         aux_2 = self.columnas.start_node
         s = Digraph('html_table')
-        s.attr(label='Hola esta es una prueba\nHello')
+        s.attr(label='Ciudad: '+ mapa.getName(), fontsize='40 ')
         txt=""
         position = 0
         #imprimir envabezado X
@@ -448,7 +500,7 @@ class Lista_Ortogonal():
                 txt +='<TR><TD bgcolor="white" border="1"><b><font point-size="20">'+ str(aux_1.position) +'</font></b></TD>'
                 pivote:Nodo_Contendor = aux_1.access
                 while pivote:
-                    if pivote.visited == True:
+                    if pivote.camino == True:
                         txt +='<TD bgcolor="yellow" border="1"></TD>'
                     elif pivote.data == "*":
                         txt +='<TD bgcolor="black" border="1"></TD>'
@@ -467,6 +519,8 @@ class Lista_Ortogonal():
                 txt += '</TR>'
         s.node('tab', label='<<TABLE border="0" cellspacing="0" cellpadding="25">'+txt+'</TABLE>>', shape='none')
         s.render('Graficas/mapa.gv',format='jpg', view=True)
+        print("Listo")
+        self.restablecerDatos()
     
     def invertValue(self):
         aux = self.filas.start_node
