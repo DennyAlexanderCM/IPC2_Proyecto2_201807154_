@@ -19,7 +19,6 @@ class Lista_Encabezado():
         self.final_node: Nodo_Head = None
 
     def insert_node(self, node: Nodo_Head):
-
         #SE VERIFICA SI LA LISTA ESTA VACÍA
         if self.start_node == None:
             self.start_node = node
@@ -30,7 +29,6 @@ class Lista_Encabezado():
                 node.nref = self.start_node
                 self.final_node.pref = node
                 self.start_node = node
-                
             elif node.position > self.final_node.position:
                 self.final_node.nref = node
                 node.pref = self.final_node
@@ -46,15 +44,8 @@ class Lista_Encabezado():
                         break
                     aux = aux.nref                
 
-    def printHead(self):
-        aux = self.start_node
-        while aux:
-            print(aux.position)
-            aux = aux.nref
-
     def getHead(self, position):
         aux = self.start_node
-
         while aux:
             if position == aux.position:
                 return aux
@@ -65,6 +56,7 @@ class Nodo_Contendor():
     def __init__(self, x, y, data):
         self.data = data
         self.value = 0
+        self.capacidad = 0
         self.anterior = None
         self.visited = False
         self.camino = False
@@ -76,11 +68,12 @@ class Nodo_Contendor():
         self.left = None
 
 class Lista_Ortogonal():
-    def __init__(self):
+    def __init__(self, nombre):
         #LISTA DE ENCABEZADOS DEL EJE Y
         self.filas = Lista_Encabezado()
         #LISTA DE ENCABEZADOS DEL EJE X
         self.columnas = Lista_Encabezado()
+        self.nombre = nombre
         self.entradas = 0
         self.recursos = 0
         self.civiles = 0
@@ -90,6 +83,7 @@ class Lista_Ortogonal():
         while aux:
             pivote:Nodo_Contendor = aux.access
             while pivote:
+                pivote.capacidad = 0
                 pivote.anterior = None
                 pivote.camino = False
                 pivote.visited = False
@@ -122,9 +116,6 @@ class Lista_Ortogonal():
                         tmp.left = nuevo
                         break
                     elif nuevo.positionX == tmp.positionX and nuevo.positionY == tmp.positionY:
-                        """nuevo.left = tmp.left
-                        tmp.left.right = nuevo
-                        tmp.left = nuevo"""
                         tmp.left.right = nuevo
                         nuevo.left = tmp.left
                         nuevo.right = tmp.right
@@ -156,17 +147,13 @@ class Lista_Ortogonal():
                         tmp.up.down = nuevo
                         tmp.up = nuevo
                         break
+                    #EN CASO YA SE HAYA CREADO LA POSICION REEMPLAZAMOS SU VALOR
                     elif nuevo.positionX == tmp.positionX and nuevo.positionY == tmp.positionY:
                         tmp.up.down = nuevo
                         nuevo.up = tmp.up
                         nuevo.down = tmp.down
                         if tmp.down != None:
                             tmp.down.up = nuevo
-                        """nuevo.down = tmp
-                        nuevo.up = tmp.up
-                        tmp.up.down = nuevo
-                        tmp.up = nuevo"""
-
                         break
                     else:
                         if tmp.down == None:
@@ -187,21 +174,8 @@ class Lista_Ortogonal():
             aux = aux.nref
         print("fin")
     
-    def copyList(self):
-        lista = Lista_Ortogonal()
-        aux = self.filas.start_node
-        while aux:
-            pivote:Nodo_Contendor = aux.access
-            while pivote:
-                lista.insert(pivote.data,pivote.positionX, pivote.positionY, pivote.data)
-                pivote = pivote.right
-            aux = aux.nref
-        return lista
-    
     def searchNode(self, positionX, positionY):
         aux_1 = self.filas.start_node
-        aux_2 = self.columnas.start_node
-        data = None
 
         while aux_1:
             if aux_1.position == positionY:
@@ -290,22 +264,17 @@ class Lista_Ortogonal():
                 pivote = pivote.right
             aux_1 = aux_1.nref
         return None
-    
-
 
     def searchRute(self, A: Nodo_Contendor, B: Nodo_Contendor, robot):
         #Contendra la lista de nodos por analizar
         listaActiva = Lista_Nodos()
-        #contendra la lista de nodos descartados
-        listaCerrada = Lista_Nodos()
         aux_1: Nodo_Contendor = A
         aux_1.visited = True
-        #meta
         end = False
+        i = 0
         
         if robot.getTipo() == "ChapinFighter":
-            vidaInicial = robot.getCapacidad()
-            vidaFinal = robot.getCapacidad()
+            aux_1.capacidad = robot.getCapacidad()
             while (not end):
                 if aux_1.left != None and aux_1.left.data != "*" and aux_1.left.visited != True:
                     if not (isinstance(aux_1.left.data, int)):
@@ -314,17 +283,18 @@ class Lista_Ortogonal():
                         aux.visited = True
                         aux.anterior = aux_1
                         aux.value = h
+                        aux.capacidad = aux_1.capacidad
                         listaActiva.insert(aux)
                     else:
-                        if vidaInicial > aux_1.left.data:
-                            if vidaFinal > aux_1.left.data:
-                                h = self.valueF(aux_1.left, B)
-                                aux = aux_1.left
-                                aux.visited = True
-                                aux.anterior = aux_1
-                                aux.value = h
-                                vidaFinal = (vidaFinal - aux_1.left.data)
-                                listaActiva.insert(aux)
+                        print(aux_1.capacidad, aux_1.left.data)
+                        if aux_1.capacidad > aux_1.left.data:
+                            h = self.valueF(aux_1.left, B)
+                            aux = aux_1.left
+                            aux.visited = True
+                            aux.anterior = aux_1
+                            aux.value = h
+                            aux.capacidad = aux_1.capacidad - aux_1.left.data
+                            listaActiva.insert(aux)
 
                 if aux_1.right != None and aux_1.right.data != "*" and aux_1.right.visited != True:
                     if not(isinstance(aux_1.right.data, int)):
@@ -333,18 +303,18 @@ class Lista_Ortogonal():
                         aux.visited = True
                         aux.anterior = aux_1
                         aux.value = h
+                        aux.capacidad = aux_1.capacidad
                         listaActiva.insert(aux)
                     else:
-                        if vidaInicial > aux_1.right.data:
-                            if vidaFinal > aux_1.right.data:
-                                h = self.valueF(aux_1.right, B)
-                                aux = aux_1.right
-                                aux.visited = True
-                                aux.anterior = aux_1
-                                aux.value = h
-                                vidaFinal = (vidaFinal - aux_1.right.data)
-                                listaActiva.insert(aux)
-                    
+                        if aux_1.capacidad > aux_1.right.data:
+                            h = self.valueF(aux_1.right, B)
+                            aux = aux_1.right
+                            aux.visited = True
+                            aux.anterior = aux_1
+                            aux.value = h
+                            aux.capacidad = (aux_1.capacidad - aux_1.right.data)
+                            listaActiva.insert(aux)
+                
                 if aux_1.down != None and aux_1.down.data != "*" and aux_1.down.visited != True:
                     if not(isinstance(aux_1.down.data, int)):
                         h = self.valueF(aux_1.down, B)
@@ -352,18 +322,17 @@ class Lista_Ortogonal():
                         aux.visited = True
                         aux.anterior = aux_1
                         aux.value = h
-                        success = True
+                        aux.capacidad = aux_1.capacidad 
                         listaActiva.insert(aux)
                     else:
-                        if vidaInicial > aux_1.down.data:
-                            if vidaFinal > aux_1.down.data:
-                                h = self.valueF(aux_1.down, B)
-                                aux = aux_1.down
-                                aux.visited = True
-                                aux.anterior = aux_1
-                                aux.value = h
-                                vidaFinal = (vidaFinal - aux_1.down.data)
-                                listaActiva.insert(aux)
+                        if aux_1.capacidad > aux_1.down.data:
+                            h = self.valueF(aux_1.down, B)
+                            aux = aux_1.down
+                            aux.visited = True
+                            aux.anterior = aux_1
+                            aux.value = h
+                            aux.capacidad = (aux_1.capacidad - aux_1.down.data)
+                            listaActiva.insert(aux)
     
                 if aux_1.up != None and aux_1.up.data != "*" and aux_1.up.visited != True:
                     if not(isinstance(aux_1.up.data, int)):
@@ -372,18 +341,17 @@ class Lista_Ortogonal():
                         aux.visited = True
                         aux.anterior = aux_1
                         aux.value = h
-                        success = True
+                        aux.capacidad = aux_1.capacidad
                         listaActiva.insert(aux)
                     else:
-                        if vidaInicial > aux_1.up.data:
-                            if vidaFinal > aux_1.up.data:
-                                h = self.valueF(aux_1.up, B)
-                                aux = aux_1.up
-                                aux.visited = True
-                                aux.anterior = aux_1
-                                aux.value = h
-                                vidaFinal = (vidaFinal - aux_1.up.data)
-                                listaActiva.insert(aux)
+                        if aux_1.capacidad > aux_1.up.data:
+                            h = self.valueF(aux_1.up, B)
+                            aux = aux_1.up
+                            aux.visited = True
+                            aux.anterior = aux_1
+                            aux.value = h
+                            aux.capacidad = (aux_1.capacidad - aux_1.up.data)
+                            listaActiva.insert(aux)
 
                 listaActiva.deleteData(aux_1.value)
                 if listaActiva.emply():
@@ -394,9 +362,9 @@ class Lista_Ortogonal():
                             B.visited = False
                             end = True
                             aux_3:Nodo_Contendor = aux_1
+                            robot.capacidadFinal = aux_1.capacidad
                             while aux_3:
                                 aux_3.camino = True
-                                print(aux_3.positionX, aux_3.positionY)
                                 aux_3 = aux_3.anterior
                             A.camino = False
                             B.camino = False
@@ -407,7 +375,6 @@ class Lista_Ortogonal():
                     break
         else:
             while (not end):
-                success = False
                 if aux_1 != None:
                     if aux_1.left != None and aux_1.left.data != "*" and aux_1.left.visited != True:
                         if not (isinstance(aux_1.left.data, int)):
@@ -416,7 +383,6 @@ class Lista_Ortogonal():
                             aux.visited = True
                             aux.anterior = aux_1
                             aux.value = h
-                            success = True
                             listaActiva.insert(aux)
 
                     if aux_1.right != None and aux_1.right.data != "*" and aux_1.right.visited != True:
@@ -426,7 +392,6 @@ class Lista_Ortogonal():
                             aux.visited = True
                             aux.anterior = aux_1
                             aux.value = h
-                            success = True
                             listaActiva.insert(aux)
                     
                     if aux_1.down != None and aux_1.down.data != "*" and aux_1.down.visited != True:
@@ -436,7 +401,6 @@ class Lista_Ortogonal():
                             aux.visited = True
                             aux.anterior = aux_1
                             aux.value = h
-                            success = True
                             listaActiva.insert(aux)
     
                     if aux_1.up != None and aux_1.up.data != "*" and aux_1.up.visited != True:
@@ -446,7 +410,6 @@ class Lista_Ortogonal():
                             aux.visited = True
                             aux.anterior = aux_1
                             aux.value = h
-                            success = True
                             listaActiva.insert(aux)
                     listaActiva.deleteData(aux_1.value)
                     if listaActiva.emply():
@@ -459,7 +422,6 @@ class Lista_Ortogonal():
                                     aux_3:Nodo_Contendor = aux_1
                                     while aux_3:
                                         aux_3.camino = True
-                                        print(aux_3.positionX, aux_3.positionY)
                                         aux_3 = aux_3.anterior
                                     A.camino = False
                                     B.camino = False
@@ -478,26 +440,30 @@ class Lista_Ortogonal():
         valor = a+b
         return valor
     
-    def createGraph(self, mapa:Ciudad):
+    def createGraph(self, mapa:Ciudad, robot):
         aux_1 = self.filas.start_node
         aux_2 = self.columnas.start_node
         s = Digraph('html_table')
-        s.attr(label='Ciudad: '+ mapa.getName(), fontsize='40 ')
+        if robot.getTipo() == "ChapinFighter":
+            txt_0 = '\nCiudad: ' + mapa.getName() + '\nTipo de misión: Extracción de recursos\nRobot envíado: ' + robot.getNombre() + '\nCapacidad inicial: '+ str(robot.getCapacidad())+ '\nCapacidad inicial: '+ str(robot.capacidadFinal)+'\n'
+        else:
+            txt_0 = '\nCiudad: ' + mapa.getName() + '\nTipo de misión: Rescate Civil\nRobot envíado: ' + robot.getNombre()+'\n'
+          
+
+        s.attr(label= txt_0, fontsize='30 ')
         txt=""
-        position = 0
-        #imprimir envabezado X
         
         if aux_2 != None:
-            txt +='<TR><TD bgcolor="white" border="1"></TD>'
+            txt +='<TR><TD bgcolor="white" border="1" width="50"  height="50"></TD>'
             while aux_2:
-                txt += '<TD bgcolor="white" border="1"><b><font point-size="20">' +str(aux_2.position)+'</font></b></TD>'
+                txt += '<TD bgcolor="white" border="1" width="50"  height="50"><b><font point-size="20">' +str(aux_2.position)+'</font></b></TD>'
                 aux_2 = aux_2.nref
             txt += '</TR>'
 
 
         if aux_1 != None:
             while aux_1:
-                txt +='<TR><TD bgcolor="white" border="1"><b><font point-size="20">'+ str(aux_1.position) +'</font></b></TD>'
+                txt +='<TR><TD bgcolor="white" border="1" height="50"><b><font point-size="20">'+ str(aux_1.position) +'</font></b></TD>'
                 pivote:Nodo_Contendor = aux_1.access
                 while pivote:
                     if pivote.camino == True:
@@ -517,16 +483,7 @@ class Lista_Ortogonal():
                     pivote = pivote.right
                 aux_1 = aux_1.nref
                 txt += '</TR>'
-        s.node('tab', label='<<TABLE border="0" cellspacing="0" cellpadding="25">'+txt+'</TABLE>>', shape='none')
+        s.node('tab', label='<<TABLE border="0" cellspacing="0">'+txt+'</TABLE>>', shape='none')
         s.render('Graficas/mapa.gv',format='jpg', view=True)
         print("Listo")
         self.restablecerDatos()
-    
-    def invertValue(self):
-        aux = self.filas.start_node
-        while aux:
-            pivote:Nodo_Contendor = aux.access
-            while pivote:
-                pivote.visited = False
-                pivote = pivote.right
-            aux = aux.nref

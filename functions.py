@@ -1,5 +1,3 @@
-from ast import Return
-from pickle import NONE
 from xml.dom import minidom
 from ciudad import Ciudad
 from LinkedList import LinkedList, LinkedListRobots
@@ -152,7 +150,7 @@ def buscarRuta(mapa, robot):
             B = ciudad.buscarCivil(1)
 
     ciudad.searchRute(A, B, robot)
-    ciudad.createGraph(mapa)
+    ciudad.createGraph(mapa, robot)
 
 def buscarRobots(data):
     #CREAMOS LISTA AUXILIAR
@@ -189,7 +187,6 @@ def lecturaArchivoXml(data):
     ciudades = rootNode.getElementsByTagName("ciudad")
     #RECORREMOS LA LISTA DE CIUDADES
     for ciudad in ciudades:
-        mapa = Lista_Ortogonal()
         #CREAMOS EL OBJETO CIUDAD QUE CONTRENDRA TODOS LOS DATOS DE CADA MAPA
         city = Ciudad()
         date = ciudad.getElementsByTagName("nombre")[0]
@@ -207,6 +204,7 @@ def lecturaArchivoXml(data):
         #COLUMNAS
         city.setColumnas(columnas)
         #print(name, filas, columnas)
+        mapa = Lista_Ortogonal(name)
 
         leerFilas = ciudad.getElementsByTagName("fila")
         leerUnidadesMilitares = ciudad.getElementsByTagName("unidadMilitar")
@@ -232,13 +230,11 @@ def lecturaArchivoXml(data):
                     mapa.insert(int(countCol), int(numero), caracter)
                 countCol +=1
         if len(leerUnidadesMilitares) > 0:
-            
             for elemento in leerUnidadesMilitares:
                 fila = elemento.getAttribute("fila")
                 columna = elemento.getAttribute("columna") 
                 vida = elemento.firstChild.data
                 mapa.insert(int(columna), int(fila), int(vida))
-                #print(fila, columna, vida)
         city.setMapa(mapa)
         listaCiudades.append(city)
     print("Datos Cargados Correctamente")

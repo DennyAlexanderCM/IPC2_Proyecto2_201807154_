@@ -17,9 +17,6 @@ class Ciudad:
     def setColumnas(self, columnas):
         self.columnas = columnas
     
-    def setUnidadMilitar(self, unidad):
-        self.unidadMilitar = unidad
-    
     def setMapa(self, mapa):
         self.mapa = mapa
     

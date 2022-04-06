@@ -115,7 +115,6 @@ class LinkedListRobots:
         while aux:
             if aux.data.getTipo() == tipo:
                 if seleccion  == i:
-                    print(aux.data.getNombre())
                     return aux.data
                 i += 1
             aux = aux.next
